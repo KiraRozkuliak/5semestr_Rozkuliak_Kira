@@ -1,50 +1,59 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using TMPro;
 using UnityEngine;
 
-public class PlayerControler12c : MonoBehaviour
+public class PlayerControler : MonoBehaviour
 {
-    public float moveSpeed = 1000;
-    public float moveInput = 0;
+    [Header("Move")]
+    public float moveSpeed = 5;
+    public float runSpeed = 7;
+
+    [Header("Jump (Force)")]
     public float jumpForce = 300;
-    public bool isJump = false;
 
+    [Header("Refs")]
     public Rigidbody2D rb;
-    public SpriteRenderer sprite;
-    public GroundChecker groundChecker;
+    public GroundChecker groundCheck;
+    public SpriteRenderer spriteRenderer;
 
-    // Start is called before the first frame update
-    void Start()
+    // Internal state (читання інпуту в Update, застосування у FixedUpdate)
+    private float _moveInput;
+    private bool _jumpQueued;
+
+    void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        sprite = GetComponent<SpriteRenderer>();
+        if (!rb) rb = GetComponent<Rigidbody2D>();
+        if (!spriteRenderer) spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        moveInput = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(moveInput *
-            moveSpeed *
-            Time.deltaTime,
-            rb.velocity.y);
+        // 1) Вхід користувача
+        _moveInput = Input.GetAxisRaw("Horizontal"); // Raw – більш “чіткий” контроль
 
-        if (Input.GetKeyDown(KeyCode.Space) && groundChecker.isGrounded)
-        {
-            isJump = true;
-        }
+        // 2) Фліп спрайта
+        if (_moveInput > 0) spriteRenderer.flipX = false;
+        else if (_moveInput < 0) spriteRenderer.flipX = true;
+
+        // 3) Черга стрибка (натискання ловимо тут, виконуємо у FixedUpdate)
+        if (Input.GetKeyDown(KeyCode.Space))
+            _jumpQueued = true;
     }
-    private void FixedUpdate()
+
+    void FixedUpdate()
     {
-        rb.velocity = new Vector2(moveInput *
-           moveSpeed *
-           Time.fixedDeltaTime,
-           rb.velocity.y);
-        if (isJump && groundChecker.isGrounded)
+        // 1) Рух (фізика)
+        float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : moveSpeed;
+        rb.velocity = new Vector2(_moveInput * currentSpeed, rb.velocity.y);
+
+        // 2) Стрибок (фізика)
+        if (_jumpQueued && groundCheck != null && groundCheck.isGrounded)
         {
-            rb.AddForce(Vector2.up * jumpForce);
-            isJump = false;
+            rb.AddForce(Vector2.up * jumpForce); // ForceMode2D.Force за замовчуванням
         }
+
+        // Стрибок опрацьовано — скидаємо прапорець
+        _jumpQueued = false;
     }
 }
