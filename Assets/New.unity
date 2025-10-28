@@ -698,7 +698,7 @@ MonoBehaviour:
   rb: {fileID: 1939721258}
   groundCheck: {fileID: 1274202697}
   spriteRenderer: {fileID: 239835603}
-  anim: {fileID: 0}
+  anim: {fileID: 239835602}
 --- !u!50 &1939721258
 Rigidbody2D:
   serializedVersion: 4
